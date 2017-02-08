@@ -7,13 +7,19 @@ module DeviseTokenAuth
 
     def create
       @resource            = resource_class.new(sign_up_params)
-      @resource.provider   = "email"
+      @resource.provider   = "login"
 
       # honor devise configuration for case_insensitive_keys
       if resource_class.case_insensitive_keys.include?(:email)
         @resource.email = sign_up_params[:email].try :downcase
       else
         @resource.email = sign_up_params[:email]
+      end
+
+      if resource_class.case_insensitive_keys.include?(:username)
+        @resource.username = sign_up_params[:username].try :downcase
+      else
+        @resource.username = sign_up_params[:username]
       end
 
       # give redirect value from params priority

@@ -2,10 +2,11 @@ module DeviseTokenAuth::Concerns::UserOmniauthCallbacks
   extend ActiveSupport::Concern
 
   included do
-    validates :email, presence: true, email: true, if: Proc.new { |u| u.provider == 'email' }
-    validates_presence_of :uid, if: Proc.new { |u| u.provider != 'email' }
-
-    # only validate unique emails among email registration users
+    validates :email, allow_blank: true, email: true, if: Proc.new { |u| u.provider == 'login' }
+    validates_presence_of :email, unless: :username?
+    validates_presence_of :uid, if: Proc.new { |u| u.provider != 'login' }
+    validate :validate_username
+    validates_format_of :username, with: /^[a-zA-Z0-9_\.]*$/, multiline: true
     validate :unique_email_user, on: :create
 
     # keep uid in sync with email
@@ -16,13 +17,25 @@ module DeviseTokenAuth::Concerns::UserOmniauthCallbacks
   protected
 
   # only validate unique email among users that registered by email
+  def validate_username
+    if User.where(email: username).exists?
+      errors.add(:username, :invalid)
+    end
+  end
+
   def unique_email_user
-    if provider == 'email' && self.class.where(provider: 'email', email: email).count > 0
+    if provider == 'login' && self.class.where(provider: 'login', email: email).count > 0
       errors.add(:email, :taken)
     end
   end
 
   def sync_uid
-    self.uid = email if provider == 'email'
+    if provider == 'login'
+      if !self.email.blank?
+        self.uid = self.email
+      else
+        self.uid = self.username
+      end
+    end
   end
 end
