@@ -8,6 +8,9 @@ module DeviseTokenAuth::Concerns::UserOmniauthCallbacks
     validate :validate_username
     validates_format_of :username, with: /^[a-zA-Z0-9_\.]*$/, multiline: true
     validate :unique_email_user, on: :create
+    validates_presence_of :password, on: :create
+    validates_confirmation_of :password_confirmation
+    validates_presence_of :password_confirmation, if: lambda {|u| u.encrypted_password_changed? }
 
     # keep uid in sync with email
     before_save :sync_uid
