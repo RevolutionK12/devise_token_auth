@@ -43,7 +43,6 @@ class DemoGroupControllerTest < ActionDispatch::IntegrationTest
           @resp_token       = response.headers['access-token']
           @resp_client_id   = response.headers['client']
           @resp_expiry      = response.headers['expiry']
-          @resp_uid         = response.headers['uid']
         end
 
         test 'request is successful' do
@@ -87,7 +86,6 @@ class DemoGroupControllerTest < ActionDispatch::IntegrationTest
           @resp_token       = response.headers['access-token']
           @resp_client_id   = response.headers['client']
           @resp_expiry      = response.headers['expiry']
-          @resp_uid         = response.headers['uid']
         end
 
         test 'request is successful' do
@@ -132,7 +130,7 @@ class DemoGroupControllerTest < ActionDispatch::IntegrationTest
 
         it 'should return error: unauthorized status' do
           assert_equal 401, response.status
-        end      
+        end
       end
     end
   end
