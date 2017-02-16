@@ -57,7 +57,7 @@ module DeviseTokenAuth
           else
             # email auth has been bypassed, authenticate user
             @client_id = SecureRandom.urlsafe_base64(nil, false)
-            @token     = SecureRandom.urlsafe_base64(nil, false)
+            @token = @resource.build_jwt
 
             @resource.tokens[@client_id] = {
               token: BCrypt::Password.create(@token),

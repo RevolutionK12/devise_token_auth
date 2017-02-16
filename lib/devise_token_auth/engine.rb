@@ -9,10 +9,8 @@ module DeviseTokenAuth
     end
   end
 
-  mattr_accessor :change_headers_on_each_request,
-                 :max_number_of_devices,
+  mattr_accessor :max_number_of_devices,
                  :token_lifespan,
-                 :batch_request_buffer_throttle,
                  :omniauth_prefix,
                  :default_confirm_success_url,
                  :default_password_reset_url,
@@ -20,13 +18,12 @@ module DeviseTokenAuth
                  :check_current_password_before_update,
                  :enable_standard_devise_support,
                  :remove_tokens_after_password_reset,
+                 :secret_key,
                  :default_callbacks,
                  :headers_names
 
-  self.change_headers_on_each_request       = true
   self.max_number_of_devices                = 10
   self.token_lifespan                       = 2.weeks
-  self.batch_request_buffer_throttle        = 5.seconds
   self.omniauth_prefix                      = '/omniauth'
   self.default_confirm_success_url          = nil
   self.default_password_reset_url           = nil
@@ -34,11 +31,11 @@ module DeviseTokenAuth
   self.check_current_password_before_update = false
   self.enable_standard_devise_support       = false
   self.remove_tokens_after_password_reset   = false
+  self.secret_key                           = ""
   self.default_callbacks                    = true
   self.headers_names                        = {:'access-token' => 'access-token',
                                                :'client' => 'client',
                                                :'expiry' => 'expiry',
-                                               :'uid' => 'uid',
                                                :'token-type' => 'token-type' }
 
   def self.setup(&block)

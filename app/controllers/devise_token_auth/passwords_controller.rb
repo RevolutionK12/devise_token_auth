@@ -34,11 +34,11 @@ module DeviseTokenAuth
         @email = resource_params[:email]
       end
 
-      q = "uid = ? AND provider='login'"
+      q = "email = ? AND provider='login'"
 
       # fix for mysql default case insensitivity
       if ActiveRecord::Base.connection.adapter_name.downcase.starts_with? 'mysql'
-        q = "BINARY uid = ? AND provider='login'"
+        q = "BINARY email = ? AND provider='login'"
       end
 
       @resource = resource_class.where(q, @email).first
