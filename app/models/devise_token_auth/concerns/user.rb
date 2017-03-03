@@ -5,7 +5,6 @@ module DeviseTokenAuth::Concerns::User
 
   def self.tokens_match?(token_hash, token)
     @token_equality_cache ||= {}
-
     key = "#{token_hash}/#{token}"
     result = @token_equality_cache[key] ||= (::BCrypt::Password.new(token_hash) == token)
     if @token_equality_cache.size > 10000
@@ -108,13 +107,11 @@ module DeviseTokenAuth::Concerns::User
   end
 
 
-  def valid_token?(token, client_id='default')
+  def valid_token?(token, payload, client_id='default')
     client_id ||= 'default'
 
     return false unless self.tokens[client_id]
-
     return true if token_is_current?(token, client_id)
-    return true if token_can_be_reused?(token, client_id)
 
     # return false if none of the above conditions are met
     return false
@@ -145,33 +142,16 @@ module DeviseTokenAuth::Concerns::User
     )
   end
 
+  def build_jwt
+    iat = Time.now.to_i
+    jti = "#{iat}/#{SecureRandom.hex(18)}"
 
-<<<<<<< Updated upstream
-  # allow batch requests to use the previous token
-  def token_can_be_reused?(token, client_id)
-    # ghetto HashWithIndifferentAccess
-    updated_at = self.tokens[client_id]['updated_at'] || self.tokens[client_id][:updated_at]
-    last_token = self.tokens[client_id]['last_token'] || self.tokens[client_id][:last_token]
-
-
-    return true if (
-      # ensure that the last token and its creation time exist
-      updated_at && last_token &&
-
-      # ensure that previous token falls within the batch buffer throttle time of the last request
-      Time.parse(updated_at) > Time.now - DeviseTokenAuth.batch_request_buffer_throttle &&
-
-      # ensure that the token is valid
-      ::BCrypt::Password.new(last_token) == token
-    )
-=======
     token = JWT.encode({
       iat: iat, # Seconds since epoch, determine when this token is stale
       jti: jti, # Unique token id, helps prevent replay attacks
       uid: self.id,
       exp: (Time.now + DeviseTokenAuth.token_lifespan).to_i
     }, DeviseTokenAuth.secret_key, DeviseTokenAuth.algorithm)
->>>>>>> Stashed changes
   end
 
 
@@ -179,19 +159,17 @@ module DeviseTokenAuth::Concerns::User
   def create_new_auth_token(client_id=nil)
     client_id  ||= SecureRandom.urlsafe_base64(nil, false)
     last_token ||= nil
-    token        = SecureRandom.urlsafe_base64(nil, false)
+    token        = build_jwt
     token_hash   = ::BCrypt::Password.create(token)
     expiry       = (Time.now + DeviseTokenAuth.token_lifespan).to_i
 
-    if self.tokens[client_id] && self.tokens[client_id]['token']
-      last_token = self.tokens[client_id]['token']
+    self.tokens.delete_if do |cid, v|
+      cid == client_id
     end
 
     self.tokens[client_id] = {
       token:      token_hash,
-      expiry:     expiry,
-      last_token: last_token,
-      updated_at: Time.now
+      expiry:     expiry
     }
 
     return build_auth_header(token, client_id)
@@ -214,27 +192,15 @@ module DeviseTokenAuth::Concerns::User
     self.save!
 
     return {
-      DeviseTokenAuth.headers_names[:"access-token"] => token,
-      DeviseTokenAuth.headers_names[:"token-type"]   => "Bearer",
+      DeviseTokenAuth.headers_names[:"authorization"] => "Bearer #{token}",
       DeviseTokenAuth.headers_names[:"client"]       => client_id,
-      DeviseTokenAuth.headers_names[:"expiry"]       => expiry.to_s,
-      DeviseTokenAuth.headers_names[:"uid"]          => self.uid
     }
   end
 
-
   def build_auth_url(base_url, args)
-    args[:uid]    = self.uid
     args[:expiry] = self.tokens[args[:client_id]]['expiry']
 
     DeviseTokenAuth::Url.generate(base_url, args)
-  end
-
-
-  def extend_batch_buffer(token, client_id)
-    self.tokens[client_id]['updated_at'] = Time.now
-
-    return build_auth_header(token, client_id)
   end
 
   def confirmed?
@@ -242,14 +208,10 @@ module DeviseTokenAuth::Concerns::User
   end
 
   def token_validation_response
-    self.as_json(except: [
-      :tokens, :created_at, :updated_at
-    ])
+    self.as_json(except: [:tokens, :created_at, :updated_at])
   end
 
-
   protected
-
   def set_empty_token_hash
     self.tokens ||= {} if has_attribute?(:tokens)
   end
