@@ -25,10 +25,8 @@ DeviseTokenAuth.setup do |config|
   # config.algorithm = 'HS256'
 
   # Makes it possible to change the headers names
-  # config.headers_names = {:'access-token' => 'access-token',
-  #                        :'client' => 'client',
-  #                        :'expiry' => 'expiry',
-  #                        :'token-type' => 'token-type' }
+  # config.headers_names = {:'authorization' => 'Authorization',
+  #                        :'client' => 'client' }
 
   # By default, only Bearer Token authentication is implemented out of the box.
   # If, however, you wish to integrate with legacy Devise authentication, you can
