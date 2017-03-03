@@ -831,7 +831,7 @@ class DeviseTokenAuth::RegistrationsControllerTest < ActionDispatch::Integration
         }
 
         @resource  = assigns(:resource)
-        @token     = response.headers["access-token"]
+        @token     = response.headers["Authorization"]
         @client_id = response.headers["client"]
       end
 
@@ -848,11 +848,8 @@ class DeviseTokenAuth::RegistrationsControllerTest < ActionDispatch::Integration
       end
 
       test "auth headers were returned in response" do
-        assert response.headers["access-token"]
-        assert response.headers["token-type"]
+        assert response.headers["Authorization"]
         assert response.headers["client"]
-        assert response.headers["expiry"]
-        assert response.headers["uid"]
       end
 
       test "response token is valid" do

@@ -27,7 +27,7 @@ module DeviseTokenAuth::Concerns::UserOmniauthCallbacks
   end
 
   def unique_email_user
-    if provider == 'login' && self.class.where(provider: 'login', email: email).count > 0
+    if provider == 'login' && self.class.where(provider: 'login', email: email).where.not(email: nil).count > 0
       errors.add(:email, :taken)
     end
   end
