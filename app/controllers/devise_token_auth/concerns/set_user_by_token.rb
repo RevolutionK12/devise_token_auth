@@ -65,7 +65,7 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     }
 
     payload, _ = JWT.decode @token, DeviseTokenAuth.secret_key, true, options
-    user = User.find(payload['uid'])
+    user = User.find(payload['sub'])
 
     if user && user.valid_token?(@token, payload, @client_id)
       # sign_in with bypass: true will be deprecated in the next version of Devise
