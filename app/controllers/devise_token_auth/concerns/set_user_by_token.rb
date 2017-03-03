@@ -24,13 +24,14 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     return unless rc
 
     #gets the headers names, which was set in the initialize file
+    uid_name = DeviseTokenAuth.headers_names[:'uid']
     access_token_name = DeviseTokenAuth.headers_names[:'access-token']
     client_name = DeviseTokenAuth.headers_names[:'client']
 
     # parse header for values necessary for authentication
+    uid        = request.headers[uid_name] || params[uid_name]
     @token     ||= request.headers[access_token_name] || params[access_token_name]
     @client_id ||= request.headers[client_name] || params[client_name]
-    @refresh_token = request.headers[:refresh_token]
 
     # client_id isn't required, set to 'default' if absent
     @client_id ||= 'default'
@@ -56,18 +57,20 @@ module DeviseTokenAuth::Concerns::SetUserByToken
 
     return false unless @token
 
+<<<<<<< Updated upstream
+    # mitigate timing attacks by finding by uid instead of auth token
+    user = uid && rc.find_by_uid(uid)
+=======
     options = {
-      algorithm: 'HS256',
+      algorithm: DeviseTokenAuth.algorithm,
       exp: DeviseTokenAuth.token_lifespan,
       aud: nil,
       verify_aud: false,
       verify_expiration: true
     }
+>>>>>>> Stashed changes
 
-    payload, _ = JWT.decode @token, DeviseTokenAuth.secret_key, true, options
-    user = User.find(payload['uid'])
-
-    if user && user.valid_token?(@token, payload, @client_id)
+    if user && user.valid_token?(@token, @client_id)
       # sign_in with bypass: true will be deprecated in the next version of Devise
       if self.respond_to? :bypass_sign_in
         bypass_sign_in(user, scope: :user)
@@ -90,7 +93,7 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     # Generate new client_id with existing authentication
     @client_id = nil unless @used_auth_by_token
 
-    if @used_auth_by_token && !@refresh_token
+    if @used_auth_by_token && !DeviseTokenAuth.change_headers_on_each_request
       # should not append auth header if @resource related token was
       # cleared by sign out in the meantime
       return if @resource.reload.tokens[@client_id].nil?
@@ -101,6 +104,7 @@ module DeviseTokenAuth::Concerns::SetUserByToken
       response.headers.merge!(auth_header)
 
     else
+
       # Lock the user record during any auth_header updates to ensure
       # we don't have write contention from multiple threads
       @resource.with_lock do
@@ -108,13 +112,24 @@ module DeviseTokenAuth::Concerns::SetUserByToken
         # cleared by sign out in the meantime
         return if @used_auth_by_token && @resource.tokens[@client_id].nil?
 
+        # determine batch request status after request processing, in case
+        # another processes has updated it during that processing
+        @is_batch_request = is_batch_request?(@resource, @client_id)
+
         auth_header = {}
 
-        # update Authorization response header with new token
-        auth_header = @resource.create_new_auth_token(@client_id)
+        # extend expiration of batch buffer to account for the duration of
+        # this request
+        if @is_batch_request
+          auth_header = @resource.extend_batch_buffer(@token, @client_id)
 
-        # update the response header
-        response.headers.merge!(auth_header)
+        # update Authorization response header with new token
+        else
+          auth_header = @resource.create_new_auth_token(@client_id)
+
+          # update the response header
+          response.headers.merge!(auth_header)
+        end
 
       end # end lock
 
@@ -130,5 +145,16 @@ module DeviseTokenAuth::Concerns::SetUserByToken
     end
 
     mapping.to
+  end
+
+
+  private
+
+
+  def is_batch_request?(user, client_id)
+    !params[:unbatch] &&
+    user.tokens[client_id] &&
+    user.tokens[client_id]['updated_at'] &&
+    Time.parse(user.tokens[client_id]['updated_at']) > @request_started_at - DeviseTokenAuth.batch_request_buffer_throttle
   end
 end
