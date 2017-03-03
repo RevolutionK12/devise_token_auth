@@ -146,6 +146,7 @@ module DeviseTokenAuth::Concerns::User
   end
 
 
+<<<<<<< Updated upstream
   # allow batch requests to use the previous token
   def token_can_be_reused?(token, client_id)
     # ghetto HashWithIndifferentAccess
@@ -163,6 +164,14 @@ module DeviseTokenAuth::Concerns::User
       # ensure that the token is valid
       ::BCrypt::Password.new(last_token) == token
     )
+=======
+    token = JWT.encode({
+      iat: iat, # Seconds since epoch, determine when this token is stale
+      jti: jti, # Unique token id, helps prevent replay attacks
+      uid: self.id,
+      exp: (Time.now + DeviseTokenAuth.token_lifespan).to_i
+    }, DeviseTokenAuth.secret_key, DeviseTokenAuth.algorithm)
+>>>>>>> Stashed changes
   end
 
 

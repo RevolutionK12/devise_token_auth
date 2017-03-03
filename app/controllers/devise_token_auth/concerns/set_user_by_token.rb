@@ -57,8 +57,18 @@ module DeviseTokenAuth::Concerns::SetUserByToken
 
     return false unless @token
 
+<<<<<<< Updated upstream
     # mitigate timing attacks by finding by uid instead of auth token
     user = uid && rc.find_by_uid(uid)
+=======
+    options = {
+      algorithm: DeviseTokenAuth.algorithm,
+      exp: DeviseTokenAuth.token_lifespan,
+      aud: nil,
+      verify_aud: false,
+      verify_expiration: true
+    }
+>>>>>>> Stashed changes
 
     if user && user.valid_token?(@token, @client_id)
       # sign_in with bypass: true will be deprecated in the next version of Devise
