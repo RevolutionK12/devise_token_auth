@@ -10,7 +10,7 @@ use Rack::Cors do
     origins '*'
     resource '*',
       :headers => :any,
-      :expose => ['access-token', 'expiry', 'token-type', 'client'],
+      :expose => ['Authorization', 'client'],
       :methods => [:get, :post, :options, :delete, :put]
   end
 end

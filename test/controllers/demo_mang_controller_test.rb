@@ -16,9 +16,8 @@ class DemoMangControllerTest < ActionDispatch::IntegrationTest
 
         @auth_headers = @resource.create_new_auth_token
 
-        @token     = @auth_headers['access-token']
+        @token     = @auth_headers['Authorization']
         @client_id = @auth_headers['client']
-        @expiry    = @auth_headers['expiry']
       end
 
       describe 'successful request' do
@@ -28,9 +27,8 @@ class DemoMangControllerTest < ActionDispatch::IntegrationTest
 
           get '/demo/members_only_mang', {}, @auth_headers
 
-          @resp_token       = response.headers['access-token']
+          @resp_token       = response.headers['Authorization']
           @resp_client_id   = response.headers['client']
-          @resp_expiry      = response.headers['expiry']
         end
 
         describe 'devise mappings' do
@@ -65,7 +63,7 @@ class DemoMangControllerTest < ActionDispatch::IntegrationTest
             # ensure that request is not treated as batch request
             age_token(@resource, @client_id)
 
-            get '/demo/members_only_mang', {}, @auth_headers.merge({'access-token' => @resp_token})
+            get '/demo/members_only_mang', {}, @auth_headers.merge({'Authorization' => @resp_token})
           end
 
           it "should allow a new request to be made using new token" do
@@ -76,11 +74,11 @@ class DemoMangControllerTest < ActionDispatch::IntegrationTest
 
       describe 'failed request' do
         before do
-          get '/demo/members_only_mang', {}, @auth_headers.merge({'access-token' => "bogus"})
+          get '/demo/members_only_mang', {}, @auth_headers.merge({'Authorization' => "bogus"})
         end
 
         it 'should not return any auth headers' do
-          refute response.headers['access-token']
+          refute response.headers['Authorization']
         end
 
         it 'should return error: unauthorized status' do

@@ -11,9 +11,8 @@ class Custom::TokenValidationsControllerTest < ActionDispatch::IntegrationTest
 
       @auth_headers = @resource.create_new_auth_token
 
-      @token     = @auth_headers['access-token']
+      @token     = @auth_headers['Authorization']
       @client_id = @auth_headers['client']
-      @expiry    = @auth_headers['expiry']
 
       # ensure that request is not treated as batch request
       age_token(@resource, @client_id)

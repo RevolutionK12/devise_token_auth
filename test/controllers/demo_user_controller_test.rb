@@ -17,9 +17,8 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
 
         @auth_headers = @resource.create_new_auth_token
 
-        @token     = @auth_headers['access-token']
+        @token     = @auth_headers['Authorization']
         @client_id = @auth_headers['client']
-        @expiry    = @auth_headers['expiry']
       end
 
       describe 'successful request' do
@@ -29,9 +28,8 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
 
           get '/demo/members_only', {}, @auth_headers
 
-          @resp_token       = response.headers['access-token']
+          @resp_token       = response.headers['Authorization']
           @resp_client_id   = response.headers['client']
-          @resp_expiry      = response.headers['expiry']
         end
 
         describe 'devise mappings' do
@@ -70,7 +68,7 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
             # ensure that request is not treated as batch request
             age_token(@resource, @client_id)
 
-            get '/demo/members_only', {}, @auth_headers.merge({'access-token' => @resp_token})
+            get '/demo/members_only', {}, @auth_headers.merge({'Authorization' => @resp_token})
           end
 
           it 'should not treat this request as a batch request' do
@@ -85,11 +83,11 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
 
       describe 'failed request' do
         before do
-          get '/demo/members_only', {}, @auth_headers.merge({'access-token' => "bogus"})
+          get '/demo/members_only', {}, @auth_headers.merge({'Authorization' => "bogus"})
         end
 
         it 'should not return any auth headers' do
-          refute response.headers['access-token']
+          refute response.headers['Authorization']
         end
 
         it 'should return error: unauthorized status' do
@@ -153,7 +151,7 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
           end
 
           it 'should not return auth-headers' do
-            refute response.headers['access-token']
+            refute response.headers['Authorization']
           end
         end
 
@@ -164,29 +162,29 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
           end
 
           it 'should not return auth-headers' do
-            refute response.headers['access-token']
+            refute response.headers['Authorization']
           end
         end
       end
 
-      describe 'when access-token name has been changed' do
+      describe 'when Authorization name has been changed' do
         before do
           # ensure that request is not treated as batch request
-          DeviseTokenAuth.headers_names[:'access-token'] = 'new-access-token'
+          DeviseTokenAuth.headers_names[:'Authorization'] = 'new-Authorization'
           auth_headers_modified = @resource.create_new_auth_token
           client_id = auth_headers_modified['client']
           age_token(@resource, client_id)
 
           get '/demo/members_only', {}, auth_headers_modified
-          @resp_token = response.headers['new-access-token']
+          @resp_token = response.headers['new-Authorization']
         end
 
-        it 'should have "new-access-token" header' do
+        it 'should have "new-Authorization" header' do
           assert @resp_token.present?
         end
 
         after do
-          DeviseTokenAuth.headers_names[:'access-token'] = 'access-token'
+          DeviseTokenAuth.headers_names[:'Authorization'] = 'Authorization'
         end
       end
     end
@@ -209,9 +207,8 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
           # no auth headers sent, testing that warden authenticates correctly.
           get '/demo/members_only', {}, nil
 
-          @resp_token       = response.headers['access-token']
+          @resp_token       = response.headers['Authorization']
           @resp_client_id   = response.headers['client']
-          @resp_expiry      = response.headers['expiry']
         end
 
         describe 'devise mappings' do
@@ -267,9 +264,8 @@ class DemoUserControllerTest < ActionDispatch::IntegrationTest
 
           get '/demo/members_only', {}, @auth_headers
 
-          @resp_token       = response.headers['access-token']
+          @resp_token       = response.headers['Authorization']
           @resp_client_id   = response.headers['client']
-          @resp_expiry      = response.headers['expiry']
         end
 
         describe 'devise mappings' do
