@@ -22,6 +22,8 @@ DeviseTokenAuth.setup do |config|
   # It depends on fields like email and provider and uid.
   # config.default_callbacks = true
 
+  # config.algorithm = 'HS256'
+
   # Makes it possible to change the headers names
   # config.headers_names = {:'access-token' => 'access-token',
   #                        :'client' => 'client',
